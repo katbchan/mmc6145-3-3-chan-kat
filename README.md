@@ -1,1 +1,1 @@
-# -mmc6145-3-3-chan-kat
+# mmc6145-3-3-chan-kat
