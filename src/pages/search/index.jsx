@@ -16,12 +16,53 @@ export default function Search() {
   // https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=YOUR_QUERY
   // Use a query of "React"
 
+  useEffect(() => {
+    const fetchInitialBooks = async () => {
+      setFetching(true)
+      try {
+        const response = await fetch(
+          "https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=React"
+        )
+        const data = await response.json()
+        setBookSearchResults(data.items)
+        setPreviousQuery("React")
+      } catch (error) {
+        console.error("Error fetching books:", error)
+        setBookSearchResults([])
+      } finally {
+        setFetching(false)
+      }
+    }
+    fetchInitialBooks()
+  }, [])
+
   // TODO: Write a submit handler for the form that fetches data from:
   // https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=YOUR_QUERY
   // and stores the "items" property in the result to the bookSearchResults variable
   // This function MUST prevent repeat searches if:
   // fetch has not finished
   // the query is unchanged
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (fetching || !query || query === previousQuery) {
+      return
+    }
+    setFetching(true)
+    try {
+      const response = await fetch(
+        `https://www.googleapis.com/books/v1/volumes?langRestrict=en&maxResults=16&q=${query}`
+      )
+      const data = await response.json()
+      setBookSearchResults(data.items)
+      setPreviousQuery(query)
+      } catch (error) {
+      console.error("Error fetching books:", error)
+      setBookSearchResults([])
+    } finally {
+      setFetching(false)
+    }
+  }
 
   const inputRef = useRef()
   const inputDivRef = useRef()
@@ -30,7 +71,7 @@ export default function Search() {
     <main className={styles.search}>
       <h1>Book Search</h1>
       {/* TODO: add an onSubmit handler */}
-      <form className={styles.form}>
+      <form className={styles.form} onSubmit={handleSubmit}>
         <label htmlFor="book-search">Search by author, title, and/or keywords:</label>
         <div ref={inputDivRef}>
           {/* TODO: add value and onChange props to the input element based on query/setQuery */}
@@ -39,6 +80,8 @@ export default function Search() {
             type="text"
             name="book-search"
             id="book-search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
             />
           <button type="submit">Submit</button>
         </div>
@@ -52,6 +95,18 @@ export default function Search() {
         : bookSearchResults?.length
         ? <div className={styles.bookList}>
             {/* TODO: render BookPreview components for each search result here based on bookSearchResults */}
+          {bookSearchResults?.map((book) => {
+              const volumeInfo = book.volumeInfo;
+              return (
+                <BookPreview
+                  key={book.id}
+                  title={volumeInfo.title}
+                  authors={volumeInfo.authors}
+                  thumbnail={volumeInfo.imageLinks?.thumbnail}
+                  previewLink={volumeInfo.previewLink}
+                />
+              )
+            })}
           </div>
         : <NoResults
           {...{inputRef, inputDivRef, previousQuery}}
